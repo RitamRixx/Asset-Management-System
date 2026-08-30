@@ -1,4 +1,4 @@
-@tailwind base;
+/* @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -13,6 +13,70 @@
 
 :focus-visible {
   outline: 2px solid #3b4b8c;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+} */
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Logarhythm color system.
+ *
+ * Values are R G B triples (no commas — required for Tailwind's
+ * `rgb(var(--x) / <alpha-value>)` opacity syntax). `:root` is light mode;
+ * `.dark` overrides the same variable names for dark mode. Because every
+ * component in the app already uses the semantic classes below (text-ink,
+ * bg-card, bg-surface, border-border, bg-primary) instead of hardcoded
+ * hex values, toggling `.dark` on <html> re-themes the entire app in one
+ * shot — see contexts/ThemeContext.tsx for the toggle itself.
+ */
+:root {
+  --color-ink: 20 22 26;
+  --color-subtle: 91 100 114;
+  --color-surface: 246 247 249;
+  --color-card: 255 255 255;
+  --color-border: 227 230 235;
+
+  /* Logarhythm blue, sampled from the wordmark/logo. */
+  --color-primary: 44 95 168;
+  --color-primary-dark: 30 70 119;
+  --color-primary-light: 232 238 249;
+}
+
+.dark {
+  --color-ink: 231 233 238;
+  --color-subtle: 153 162 179;
+  --color-surface: 16 19 26;
+  --color-card: 23 27 36;
+  --color-border: 42 47 58;
+
+  /* Brightened for contrast against dark surfaces. */
+  --color-primary: 108 158 224;
+  --color-primary-dark: 86 134 201;
+  --color-primary-light: 28 44 70;
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-ink outline-none;
+  }
+  .input:focus {
+    @apply border-primary;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;
 }
 
