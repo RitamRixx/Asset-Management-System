@@ -27,6 +27,8 @@ from app.models.document import Document  # noqa: F401
 from app.models.audit import AuditLog  # noqa: F401
 from app.models.notification import Notification  # noqa: F401
 from app.models.device_agent import DeviceAgent  # noqa: F401
+from app.models.group import Group  # noqa: F401
+from app.models.password_reset import PasswordResetToken  # noqa: F401
 
 __all__ = [
     "Department",
@@ -52,4 +54,6 @@ __all__ = [
     "AuditLog",
     "Notification",
     "DeviceAgent",
+    "Group",
+    "PasswordResetToken"
 ]

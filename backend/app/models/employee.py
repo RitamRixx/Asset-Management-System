@@ -25,6 +25,7 @@ class Employee(Base, TimestampMixin):
     # Self-referential manager link.
     manager_id: Mapped[Optional[int]] = mapped_column(ForeignKey("employees.id"))
     location_id: Mapped[Optional[int]] = mapped_column(ForeignKey("locations.id"))
+    group_id: Mapped[Optional[int]] = mapped_column(ForeignKey("groups.id"))
 
     joining_date: Mapped[Optional[date]] = mapped_column(Date)
     employment_status: Mapped[EmploymentStatus] = mapped_column(
