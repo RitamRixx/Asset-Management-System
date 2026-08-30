@@ -14,10 +14,15 @@ class EmploymentStatus(str, enum.Enum):
     TERMINATED = "TERMINATED"
     INACTIVE = "INACTIVE"
 
+class AuthProvider(str, enum.Enum):
+    LOCAL = "LOCAL"
+    MICROSOFT = "MICROSOFT"
 
 class UserStatus(str, enum.Enum):
     ACTIVE = "ACTIVE"
     DISABLED = "DISABLED"
+    SUSPENDED = "SUSPENDED"
+    PENDING = "PENDING"
 
 
 class AssetStatus(str, enum.Enum):
@@ -105,3 +110,5 @@ class DeviceAgentStatus(str, enum.Enum):
     PENDING = "PENDING"
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
+
+
