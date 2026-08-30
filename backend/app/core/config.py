@@ -24,7 +24,17 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-
+####
+    # Microsoft Entra ID / Microsoft 365 SSO (IAM Phase 3)
+    # Disabled by default so local email/password authentication continues
+    # to work exactly as before until Entra is explicitly configured.
+    ENTRA_ENABLED: bool = False
+    ENTRA_TENANT_ID: str = ""
+    ENTRA_CLIENT_ID: str = ""
+    ENTRA_CLIENT_SECRET: str = ""
+    ENTRA_REDIRECT_URI: str = ""
+    ENTRA_ALLOWED_TENANT_ID: str = ""
+####
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
 
     # Email delivery (section 33: "Notification channels can initially be
