@@ -46,6 +46,13 @@ export interface User {
   created_at: string;
 }
 
+export interface Group {
+  id: number;
+  name: string;
+  code: string | null;
+  status: string;
+}
+
 export interface Employee {
   id: number;
   employee_code: string;
@@ -58,6 +65,7 @@ export interface Employee {
   designation: string | null;
   manager_id: number | null;
   location_id: number | null;
+  group_id: number | null;
   joining_date: string | null;
   employment_status: EmploymentStatus;
   created_at: string;
@@ -250,6 +258,7 @@ export interface HrDashboard {
   upcoming_joiners: number;
   employees_on_notice_period: number;
 }
+
 
 export interface MyDashboard {
   employee: {

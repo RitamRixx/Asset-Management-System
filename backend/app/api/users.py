@@ -85,10 +85,17 @@ def update_user_status(
 
     old_status = user.status
     user.status = payload.status
+    action_by_status = {
+        UserStatus.DISABLED: "USER_DISABLED",
+        UserStatus.SUSPENDED: "USER_SUSPENDED",
+        UserStatus.PENDING: "USER_SET_PENDING",
+        UserStatus.ACTIVE: "USER_ENABLED",
+    }
     audit_service.log_action(
         db,
         actor_user_id=current_user.id,
-        action="USER_DISABLED" if payload.status == UserStatus.DISABLED else "USER_ENABLED",
+        # action="USER_DISABLED" if payload.status == UserStatus.DISABLED else "USER_ENABLED",
+        action=action_by_status.get(payload.status, "USER_STATUS_CHANGED"),
         entity_type="User",
         entity_id=user.id,
         old_value={"status": old_status.value},

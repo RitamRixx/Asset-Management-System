@@ -38,11 +38,19 @@ def get_current_user(
     if user is None:
         raise credentials_error
 
+    # if user.status != UserStatus.ACTIVE:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="Account is disabled",
+    #     )
+    
     if user.status != UserStatus.ACTIVE:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account is disabled",
-        )
+        detail = {
+            UserStatus.DISABLED: "Account is disabled",
+            UserStatus.SUSPENDED: "Account is suspended",
+            UserStatus.PENDING: "Account is pending activation",
+        }.get(user.status, "Account is not active")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
     return user
 
