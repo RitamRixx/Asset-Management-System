@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import {
@@ -15,6 +17,7 @@ interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithToken: (token: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -60,6 +63,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [router]
   );
 
+  // Used by the SSO callback route (/sso/callback): the backend has
+  // already done the Microsoft token exchange server-side and redirected
+  // here with our own JWT in the query string — this just adopts that
+  // token the same way `login` does after the password flow, minus the
+  // /auth/login call itself.
+  const loginWithToken = useCallback(
+    async (token: string) => {
+      setToken(token);
+      const me = await apiGet<User>("/api/v1/users/me");
+      setUser(me);
+      router.push("/dashboard");
+    },
+    [router]
+  );
+
   const logout = useCallback(() => {
     clearToken();
     setUser(null);
@@ -67,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithToken, logout }}>
       {children}
     </AuthContext.Provider>
   );
