@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = "no-reply@ams-platform.local"
     SMTP_FROM_NAME: str = "AMS Platform"
 
+    # Where the SSO callback redirects after a successful/failed login,
+    # carrying the token (or error) as a query param. Separate from
+    # CORS_ORIGINS since this is a server-side redirect target, not a CORS
+    # allowlist entry.
+    FRONTEND_BASE_URL: str = "http://localhost:3000"
+
     # extra="ignore": the shared .env also carries POSTGRES_* vars that only
     # docker-compose/Postgres itself need, not this Settings class.
     model_config = SettingsConfigDict(

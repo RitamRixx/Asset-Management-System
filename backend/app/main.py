@@ -24,6 +24,7 @@ from app.api import (
     repairs,
     returns_transfers,
     software,
+    sso,
     users,
     warranties,
 )
@@ -65,6 +66,7 @@ app.include_router(notifications.router, prefix=settings.API_V1_PREFIX)
 app.include_router(documents.router, prefix=settings.API_V1_PREFIX)
 app.include_router(agent.router, prefix=settings.API_V1_PREFIX)
 app.include_router(reference.router, prefix=settings.API_V1_PREFIX)
+app.include_router(sso.router, prefix=settings.API_V1_PREFIX, tags=["auth"])
 
 
 @app.get("/")

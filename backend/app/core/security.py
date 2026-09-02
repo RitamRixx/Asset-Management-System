@@ -12,6 +12,9 @@ from passlib.context import CryptContext
 
 from app.core.config import settings
 
+_SSO_STATE_TOKEN_TYPE = "sso_state"
+_SSO_STATE_EXPIRE_MINUTES = 10
+
 _pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
@@ -39,3 +42,24 @@ def decode_access_token(token: str) -> Optional[dict[str, Any]]:
         return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
     except JWTError:
         return None
+
+
+def create_sso_state_token(data: dict[str, Any]) -> str:
+    """Short-lived, signed token carrying the PKCE verifier + nonce through
+    Microsoft's redirect round-trip (see services/entra_service.py). Not an
+    access token — gets its own `typ` claim and a much shorter expiry than
+    create_access_token's, so it can't be reused as a bearer token even if
+    it leaked in a referrer header somewhere."""
+    expire = datetime.now(timezone.utc) + timedelta(minutes=_SSO_STATE_EXPIRE_MINUTES)
+    payload: dict[str, Any] = {**data, "typ": _SSO_STATE_TOKEN_TYPE, "exp": expire}
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_sso_state_token(token: str) -> Optional[dict[str, Any]]:
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+    except JWTError:
+        return None
+    if payload.get("typ") != _SSO_STATE_TOKEN_TYPE:
+        return None
+    return payload

@@ -22,6 +22,14 @@ def get_by_employee_id(db: Session, employee_id: int) -> Optional[User]:
 def list_users(db: Session, skip: int = 0, limit: int = 50) -> list[User]:
     return list(db.scalars(select(User).offset(skip).limit(limit)))
 
+def get_by_entra_identity(db: Session, entra_object_id: str, entra_tenant_id: str) -> Optional[User]:
+    return db.scalar(
+        select(User).where(
+            User.entra_object_id == entra_object_id,
+            User.entra_tenant_id == entra_tenant_id,
+        )
+    )
+
 
 def create(db: Session, user: User) -> User:
     db.add(user)
