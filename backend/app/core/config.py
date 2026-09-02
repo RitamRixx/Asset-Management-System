@@ -49,6 +49,12 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = "no-reply@ams-platform.local"
     SMTP_FROM_NAME: str = "AMS Platform"
 
+     # Local-auth account lockout (IAM Phase 4)
+    LOGIN_LOCKOUT_THRESHOLD: int = 5
+    LOGIN_LOCKOUT_DURATION_MINUTES: int = 15
+    # Password reset (IAM Phase 4)
+    PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
+
     # Where the SSO callback redirects after a successful/failed login,
     # carrying the token (or error) as a query param. Separate from
     # CORS_ORIGINS since this is a server-side redirect target, not a CORS
