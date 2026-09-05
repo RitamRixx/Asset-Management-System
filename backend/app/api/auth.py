@@ -9,10 +9,17 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.schemas.auth import ForgotPasswordRequest, LoginRequest, ResetPasswordRequest, Token
 from app.services import auth_service, password_reset_service
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import Request
+from datetime import datetime, timezone
 
 from app.core.database import get_db
-from app.core.security import create_access_token
+from app.core.security import create_access_token, decode_access_token
 from app.schemas.auth import LoginRequest, Token
+from app.api.deps import get_current_user
+from app.models.user import User
+from app.models.revoked_token import RevokedToken
+from app.repositories import revoked_token_repository
 from app.services import auth_service
 
 router = APIRouter()
@@ -44,3 +51,26 @@ def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db))
     db.commit()
     token = create_access_token(subject=str(user.id), extra_claims={"role": user.role.value})
     return Token(access_token=token)
+
+@router.post("/auth/logout", status_code=status.HTTP_200_OK)
+def logout(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    auth_header = request.headers.get("Authorization", "")
+    raw_token = auth_header.removeprefix("Bearer ").strip()
+    payload = decode_access_token(raw_token)
+
+    if payload and payload.get("jti"):
+        revoked_token_repository.create(
+            db,
+            RevokedToken(
+                jti=payload["jti"],
+                user_id=current_user.id,
+                expires_at=datetime.fromtimestamp(payload["exp"], tz=timezone.utc),
+            ),
+        )
+        db.commit()
+
+    return {"message": "Logged out."}

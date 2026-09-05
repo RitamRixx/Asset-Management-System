@@ -78,7 +78,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [router]
   );
 
-  const logout = useCallback(() => {
+  // const logout = useCallback(() => {
+  //   clearToken();
+  //   setUser(null);
+  //   router.push("/login");
+  // }, [router]);
+
+  const logout = useCallback(async () => {
+    try {
+      await apiPost("/api/v1/auth/logout");
+    } catch {
+      // Best-effort — clear the local token regardless of server response.
+    }
     clearToken();
     setUser(null);
     router.push("/login");

@@ -14,8 +14,8 @@ from app.core.security import hash_password
 from app.models.enums import UserStatus
 from app.models.user import User
 from app.repositories import user_repository
-from app.schemas.user import UserCreate, UserRead, UserStatusUpdate
-from app.services import audit_service
+from app.schemas.user import ChangePasswordRequest, UserCreate, UserRead, UserStatusUpdate
+from app.services import audit_service, user_service
 
 router = APIRouter()
 
@@ -104,3 +104,18 @@ def update_user_status(
     db.commit()
     db.refresh(user)
     return user
+
+@router.post("/users/me/change-password", status_code=status.HTTP_200_OK)
+def change_my_password(
+    payload: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    user_service.change_password(
+        db,
+        user=current_user,
+        current_password=payload.current_password,
+        new_password=payload.new_password,
+    )
+    db.commit()
+    return {"message": "Password changed successfully."}

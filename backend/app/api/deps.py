@@ -34,6 +34,12 @@ def get_current_user(
     if payload is None or "sub" not in payload:
         raise credentials_error
 
+    jti = payload.get("jti")
+    if jti is not None:
+        from app.repositories import revoked_token_repository
+        if revoked_token_repository.is_revoked(db, jti):
+            raise credentials_error
+
     user = db.get(User, int(payload["sub"]))
     if user is None:
         raise credentials_error
