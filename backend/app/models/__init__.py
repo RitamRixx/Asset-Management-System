@@ -31,6 +31,7 @@ from app.models.group import Group  # noqa: F401
 from app.models.password_reset import PasswordResetToken
 from app.models.organization import OrganizationSettings  # noqa: F401
 from app.models.revoked_token import RevokedToken  # noqa: F401
+from app.models.issued_token import IssuedToken  # noqa: F401
 
 __all__ = [
     "Department",
@@ -59,5 +60,6 @@ __all__ = [
     "Group",
     "PasswordResetToken",
     "OrganizationSettings",
-    "RevokedToken"
+    "RevokedToken",
+    "IssuedToken"
 ]

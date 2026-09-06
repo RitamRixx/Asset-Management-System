@@ -15,7 +15,7 @@ from app.models.enums import UserStatus
 from app.models.user import User
 from app.repositories import user_repository
 from app.schemas.user import ChangePasswordRequest, UserCreate, UserRead, UserStatusUpdate
-from app.services import audit_service, user_service
+from app.services import audit_service, token_service, user_service
 
 router = APIRouter()
 
@@ -101,6 +101,21 @@ def update_user_status(
         old_value={"status": old_status.value},
         new_value={"status": user.status.value},
     )
+
+    # Any status other than ACTIVE means "this user should lose access
+    # now, not whenever their token happens to expire" — this is the
+    # piece that was missing through Phase 9.
+    if payload.status != UserStatus.ACTIVE:
+        revoked_count = token_service.revoke_all_for_user(db, user.id)
+        if revoked_count:
+            audit_service.log_action(
+                db,
+                actor_user_id=current_user.id,
+                action="USER_SESSIONS_REVOKED",
+                entity_type="User",
+                entity_id=user.id,
+                new_value={"revoked_count": revoked_count},
+            )
     db.commit()
     db.refresh(user)
     return user

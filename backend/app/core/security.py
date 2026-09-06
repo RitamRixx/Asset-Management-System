@@ -33,10 +33,14 @@ def create_access_token(subject: str, extra_claims: Optional[dict[str, Any]] = N
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
     # payload: dict[str, Any] = {"sub": subject, "exp": expire}
-    payload: dict[str, Any] = {"sub": subject, "exp": expire, "jti": secrets.token_urlsafe(16)}
+    # payload: dict[str, Any] = {"sub": subject, "exp": expire, "jti": secrets.token_urlsafe(16)}
+    jti = secrets.token_urlsafe(16)
+    payload: dict[str, Any] = {"sub": subject, "exp": expire, "jti": jti}
     if extra_claims:
         payload.update(extra_claims)
-    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    # return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return token, jti, expire
 
 
 def decode_access_token(token: str) -> Optional[dict[str, Any]]:

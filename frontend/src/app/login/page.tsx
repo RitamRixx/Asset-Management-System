@@ -113,10 +113,21 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ApiError } from "@/services/api";
 import { getSsoLoginUrl } from "@/services/auth";
+import { HCAPTCHA_ENABLED, HCAPTCHA_SITE_KEY } from "@/services/captcha";
+
+declare global {
+  interface Window {
+    hcaptcha?: {
+      render: (container: string | HTMLElement, opts: Record<string, unknown>) => string;
+      reset: (widgetId?: string) => void;
+      getResponse: (widgetId?: string) => string;
+    };
+  }
+}
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -125,13 +136,54 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [ssoError, setSsoError] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaContainerRef = useRef<HTMLDivElement>(null);
+  const widgetIdRef = useRef<string | undefined>(undefined);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
+  useEffect(() => {
+    if (!HCAPTCHA_ENABLED) return;
+
+    function renderWidget() {
+      if (!window.hcaptcha || !captchaContainerRef.current) return;
+     widgetIdRef.current = window.hcaptcha.render(captchaContainerRef.current, {
+        sitekey: HCAPTCHA_SITE_KEY,
+        callback: (token: string) => setCaptchaToken(token),
+        "expired-callback": () => setCaptchaToken(""),
+      });
+    }
+
+    if (window.hcaptcha) {
+      renderWidget();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://js.hcaptcha.com/1/api.js";
+    script.async = true;
+    script.defer = true;
+    script.onload = renderWidget;
+    document.head.appendChild(script);
+
+    return () => {
+      // Leave the script in place across re-mounts (hCaptcha's own docs
+      // recommend against removing/re-adding it) — only the widget
+      // itself, if any, needs no explicit cleanup here since the whole
+      // container unmounts with the page.
+    };
+  }, []);
+
+   async function handleSubmit(e: React.FormEvent) {
+     e.preventDefault();
+     setError(null);
+
+    if (HCAPTCHA_ENABLED && !captchaToken) {
+      setError("Please complete the CAPTCHA.");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await login(email, password);
+      await login(email, password, captchaToken);
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 401
@@ -199,6 +251,10 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
           </div>
+
+          {HCAPTCHA_ENABLED && (
+            <div className="mb-5" ref={captchaContainerRef} />
+          )}
 
           {error && (
             <p className="mb-4 rounded-md bg-status-damaged/10 px-3 py-2 text-sm text-status-damaged">

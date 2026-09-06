@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.security import hash_password, verify_password
 from app.models.enums import AuthProvider
 from app.models.user import User
-from app.services import audit_service
+from app.services import audit_service, token_service
 
 
 def change_password(
@@ -31,3 +31,9 @@ def change_password(
     audit_service.log_action(
         db, actor_user_id=user.id, action="PASSWORD_CHANGED", entity_type="User", entity_id=user.id,
     )
+
+    # Revoke every other outstanding session — the one making this
+    # request will get a fresh token from a subsequent login as normal;
+    # this doesn't revoke the token being used *right now* to make this
+    # call (see api/users.py — that'd log the caller out mid-request).
+    token_service.revoke_all_for_user(db, user.id)

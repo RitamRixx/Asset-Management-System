@@ -16,7 +16,7 @@ import type { User } from "@/types";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, captchaToken?: string) => Promise<void>;
   loginWithToken: (token: string) => Promise<void>;
   logout: () => void;
 }
@@ -49,11 +49,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUser();
   }, [loadUser]);
 
+  // const login = useCallback(
+  //   async (email: string, password: string) => {
+  //     const { access_token } = await apiPost<{ access_token: string }>(
+  //       "/api/v1/auth/login",
+  //       { email, password }
+  //     );
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, captchaToken?: string) => {
       const { access_token } = await apiPost<{ access_token: string }>(
         "/api/v1/auth/login",
-        { email, password }
+        { email, password, captcha_token: captchaToken ?? "" }
       );
       setToken(access_token);
       const me = await apiGet<User>("/api/v1/users/me");

@@ -20,13 +20,14 @@ from app.api.deps import get_current_user
 from app.models.user import User
 from app.models.revoked_token import RevokedToken
 from app.repositories import revoked_token_repository
-from app.services import auth_service
+from app.services import auth_service, captcha_service
 
 router = APIRouter()
 
 
 @router.post("/auth/login", response_model=Token)
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> Token:
+    captcha_service.verify_captcha(payload.captcha_token)
     user = auth_service.authenticate_user(db, payload.email, payload.password)
     if user is None:
         raise HTTPException(
@@ -34,7 +35,12 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> Token:
             detail="Incorrect email or password, or account is disabled",
         )
     db.commit()
-    token = create_access_token(subject=str(user.id), extra_claims={"role": user.role.value})
+    # token = create_access_token(subject=str(user.id), extra_claims={"role": user.role.value})
+    token, jti, expire = create_access_token(subject=str(user.id), extra_claims={"role": user.role.value})
+    from app.models.issued_token import IssuedToken
+    from app.repositories import issued_token_repository
+    issued_token_repository.create(db, IssuedToken(jti=jti, user_id=user.id, expires_at=expire))
+    db.commit()
     return Token(access_token=token)
 
 

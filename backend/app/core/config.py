@@ -64,6 +64,12 @@ class Settings(BaseSettings):
     # allowlist entry.
     FRONTEND_BASE_URL: str = "http://localhost:3000"
 
+    # hCaptcha (IAM Phase 10). Disabled by default so local dev/tests
+    # don't need a real site key — same "opt-in via env vars" pattern as
+    # Entra and email. Get keys at https://dashboard.hcaptcha.com.
+    HCAPTCHA_ENABLED: bool = False
+    HCAPTCHA_SECRET_KEY: str = ""
+
     # extra="ignore": the shared .env also carries POSTGRES_* vars that only
     # docker-compose/Postgres itself need, not this Settings class.
     model_config = SettingsConfigDict(

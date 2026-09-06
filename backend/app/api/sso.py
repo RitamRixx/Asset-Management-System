@@ -75,6 +75,11 @@ def sso_callback(code: str, state: str, db: Session = Depends(get_db)) -> Redire
         query = urlencode({"sso_error": str(exc.detail)})
         return RedirectResponse(url=f"{callback_path}?{query}")
 
-    token = create_access_token(subject=str(user.id), extra_claims={"role": user.role.value})
+    # token = create_access_token(subject=str(user.id), extra_claims={"role": user.role.value})
+    token, jti, expire = create_access_token(subject=str(user.id), extra_claims={"role": user.role.value})
+    from app.models.issued_token import IssuedToken
+    from app.repositories import issued_token_repository
+    issued_token_repository.create(db, IssuedToken(jti=jti, user_id=user.id, expires_at=expire))
+    db.commit()
     query = urlencode({"token": token})
     return RedirectResponse(url=f"{callback_path}?{query}")
