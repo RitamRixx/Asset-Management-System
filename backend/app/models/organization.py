@@ -25,7 +25,7 @@ class OrganizationSettings(Base):
     logo_url: Mapped[Optional[str]] = mapped_column(String(500))
     email_notifications_default: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    updated_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    updated_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), index=True)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )

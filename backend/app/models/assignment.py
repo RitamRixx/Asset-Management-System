@@ -25,8 +25,8 @@ class AssetAssignment(Base, TimestampMixin):
     __tablename__ = "asset_assignments"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
-    assigned_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False, index=True)
+    assigned_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     assigned_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -46,11 +46,11 @@ class AssignmentItem(Base, TimestampMixin):
     assignment_id: Mapped[int] = mapped_column(
         ForeignKey("asset_assignments.id"), nullable=False
     )
-    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False)
+    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False, index=True)
 
     condition_at_assignment: Mapped[Optional[AssetCondition]] = mapped_column()
     status: Mapped[AssignmentStatus] = mapped_column(
-        default=AssignmentStatus.ACTIVE, nullable=False
+        default=AssignmentStatus.ACTIVE, nullable=False, index=True
     )
 
     returned_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

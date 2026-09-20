@@ -43,6 +43,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { BrandProvider } from "@/contexts/BrandContext";
+import QueryProvider from "@/components/QueryProvider";
 
 const plexSans = IBM_Plex_Sans({
   subsets: ["latin"],
@@ -89,7 +90,9 @@ export default function RootLayout({
       <body className="min-h-screen bg-surface font-sans text-ink antialiased transition-colors duration-150">
         <ThemeProvider>
           <BrandProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <QueryProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </QueryProvider>
           </BrandProvider>
         </ThemeProvider>
       </body>

@@ -16,17 +16,17 @@ class RepairTicket(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     ticket_code: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
-    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False)
-    reported_by: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
+    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False, index=True)
+    reported_by: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False, index=True)
 
     issue: Mapped[str] = mapped_column(String(1000), nullable=False)
     priority: Mapped[RepairPriority] = mapped_column(
         default=RepairPriority.MEDIUM, nullable=False
     )
-    status: Mapped[RepairStatus] = mapped_column(default=RepairStatus.OPEN, nullable=False)
+    status: Mapped[RepairStatus] = mapped_column(default=RepairStatus.OPEN, nullable=False, index=True)
 
     diagnosis: Mapped[Optional[str]] = mapped_column(String(1000))
-    vendor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("vendors.id"))
+    vendor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("vendors.id"), index=True)
     repair_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2))
     repair_start_date: Mapped[Optional[date]] = mapped_column(Date)
     repair_end_date: Mapped[Optional[date]] = mapped_column(Date)
@@ -40,11 +40,11 @@ class RepairHistory(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     repair_ticket_id: Mapped[int] = mapped_column(
-        ForeignKey("repair_tickets.id"), nullable=False
+        ForeignKey("repair_tickets.id"), nullable=False, index=True
     )
     from_status: Mapped[Optional[RepairStatus]] = mapped_column()
     to_status: Mapped[RepairStatus] = mapped_column(nullable=False)
-    changed_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    changed_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), index=True)
     changed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

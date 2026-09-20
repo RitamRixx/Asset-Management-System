@@ -28,7 +28,7 @@ class Asset(Base, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     asset_code: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
-    asset_type_id: Mapped[int] = mapped_column(ForeignKey("asset_types.id"), nullable=False)
+    asset_type_id: Mapped[int] = mapped_column(ForeignKey("asset_types.id"), nullable=False, index=True)
 
     manufacturer: Mapped[Optional[str]] = mapped_column(String(100))
     model: Mapped[Optional[str]] = mapped_column(String(100))
@@ -36,11 +36,11 @@ class Asset(Base, TimestampMixin):
 
     purchase_date: Mapped[Optional[date]] = mapped_column(Date)
     purchase_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2))
-    vendor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("vendors.id"))
+    vendor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("vendors.id"), index=True)
 
-    status: Mapped[AssetStatus] = mapped_column(default=AssetStatus.AVAILABLE, nullable=False)
+    status: Mapped[AssetStatus] = mapped_column(default=AssetStatus.AVAILABLE, nullable=False, index=True)
     condition: Mapped[AssetCondition] = mapped_column(default=AssetCondition.NEW, nullable=False)
-    location_id: Mapped[Optional[int]] = mapped_column(ForeignKey("locations.id"))
+    location_id: Mapped[Optional[int]] = mapped_column(ForeignKey("locations.id"), index=True)
 
     hostname: Mapped[Optional[str]] = mapped_column(String(150))
     description: Mapped[Optional[str]] = mapped_column(String(500))

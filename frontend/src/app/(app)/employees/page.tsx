@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import DataTable from "@/components/DataTable";
 import StatusBadge from "@/components/StatusBadge";
 import Modal from "@/components/Modal";
@@ -16,25 +17,25 @@ import { ApiError } from "@/services/api";
 export default function EmployeesPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
   const canCreate = user?.role === "ADMIN" || user?.role === "HR";
 
-  async function refresh() {
-    setLoading(true);
-    const rows = await listEmployees();
-    setEmployees(rows);
-    setLoading(false);
-  }
+  const { data: departments = [] } = useQuery({
+    queryKey: ["departments"],
+    queryFn: listDepartments,
+  });
 
-  useEffect(() => {
-    refresh();
-    listDepartments().then(setDepartments).catch(() => {});
-  }, []);
+  const { data: employees = [], isLoading: loading } = useQuery({
+    queryKey: ["employees"],
+    queryFn: listEmployees,
+  });
+
+  function refresh() {
+    queryClient.invalidateQueries({ queryKey: ["employees"] });
+  }
 
   const departmentName = (id: number | null) =>
     departments.find((d) => d.id === id)?.name ?? "—";

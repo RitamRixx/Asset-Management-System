@@ -25,8 +25,8 @@ class AssetReturn(Base, TimestampMixin):
     assignment_item_id: Mapped[int] = mapped_column(
         ForeignKey("assignment_items.id"), nullable=False
     )
-    returned_by_employee_id: Mapped[Optional[int]] = mapped_column(ForeignKey("employees.id"))
-    received_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    returned_by_employee_id: Mapped[Optional[int]] = mapped_column(ForeignKey("employees.id"), index=True)
+    received_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
 
     return_condition: Mapped[ReturnCondition] = mapped_column(nullable=False)
     returned_at: Mapped[datetime] = mapped_column(

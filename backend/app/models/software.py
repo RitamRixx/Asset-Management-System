@@ -25,7 +25,7 @@ class SoftwareLicense(Base, TimestampMixin):
     __tablename__ = "software_licenses"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    software_id: Mapped[int] = mapped_column(ForeignKey("software.id"), nullable=False)
+    software_id: Mapped[int] = mapped_column(ForeignKey("software.id"), nullable=False, index=True)
 
     # The full key/reference is stored here but section 18 says it must
     # never be *exposed* to unauthorized users — that redaction happens in
@@ -38,7 +38,7 @@ class SoftwareLicense(Base, TimestampMixin):
 
     purchase_date: Mapped[Optional[date]] = mapped_column(Date)
     expiry_date: Mapped[Optional[date]] = mapped_column(Date)
-    vendor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("vendors.id"))
+    vendor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("vendors.id"), index=True)
     status: Mapped[LicenseStatus] = mapped_column(default=LicenseStatus.ACTIVE, nullable=False)
 
 
@@ -49,8 +49,8 @@ class SoftwareAssignment(Base, TimestampMixin):
     __tablename__ = "software_assignments"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
-    license_id: Mapped[int] = mapped_column(ForeignKey("software_licenses.id"), nullable=False)
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False, index=True)
+    license_id: Mapped[int] = mapped_column(ForeignKey("software_licenses.id"), nullable=False, index=True)
     assigned_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

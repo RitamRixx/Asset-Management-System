@@ -33,7 +33,7 @@ class Document(Base):
     file_path: Mapped[str] = mapped_column(String(500), nullable=False)
     content_type: Mapped[Optional[str]] = mapped_column(String(100))
 
-    uploaded_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    uploaded_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), index=True)
     uploaded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

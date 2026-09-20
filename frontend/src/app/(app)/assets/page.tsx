@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import DataTable from "@/components/DataTable";
 import StatusBadge from "@/components/StatusBadge";
 import Modal from "@/components/Modal";
@@ -16,31 +17,38 @@ import { ApiError } from "@/services/api";
 export default function AssetsPage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [assetTypes, setAssetTypes] = useState<AssetType[]>([]);
-  const [summary, setSummary] = useState<InventorySummary | null>(null);
+  const queryClient = useQueryClient();
+  
   const [q, setQ] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [activeQuery, setActiveQuery] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [showImport, setShowImport] = useState(false);
 
   const canManage = user?.role === "ADMIN" || user?.role === "IT_SUPPORT";
 
-  async function refresh(query?: string) {
-    setLoading(true);
-    const [rows, inv] = await Promise.all([
-      listAssets(query ? { q: query } : {}),
-      getInventorySummary(),
-    ]);
-    setAssets(rows);
-    setSummary(inv);
-    setLoading(false);
-  }
+  const { data: assetTypes = [] } = useQuery({
+    queryKey: ["assetTypes"],
+    queryFn: listAssetTypes,
+  });
 
-  useEffect(() => {
-    refresh();
-    listAssetTypes().then(setAssetTypes).catch(() => {});
-  }, []);
+  const { data: summary } = useQuery({
+    queryKey: ["inventorySummary"],
+    queryFn: getInventorySummary,
+  });
+
+  const { data: assets = [], isLoading: loading } = useQuery({
+    queryKey: ["assets", activeQuery],
+    queryFn: () => listAssets(activeQuery ? { q: activeQuery } : {}),
+  });
+
+  function refresh(query?: string) {
+    if (query !== undefined) {
+      setQ(query);
+      setActiveQuery(query);
+    }
+    queryClient.invalidateQueries({ queryKey: ["assets"] });
+    queryClient.invalidateQueries({ queryKey: ["inventorySummary"] });
+  }
 
   const typeName = (id: number) => assetTypes.find((t) => t.id === id)?.name ?? "—";
 

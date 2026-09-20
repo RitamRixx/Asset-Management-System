@@ -20,16 +20,16 @@ class Employee(Base, TimestampMixin):
     email: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
     phone: Mapped[Optional[str]] = mapped_column(String(30))
 
-    department_id: Mapped[Optional[int]] = mapped_column(ForeignKey("departments.id"))
+    department_id: Mapped[Optional[int]] = mapped_column(ForeignKey("departments.id"), index=True)
     designation: Mapped[Optional[str]] = mapped_column(String(100))
     # Self-referential manager link.
-    manager_id: Mapped[Optional[int]] = mapped_column(ForeignKey("employees.id"))
-    location_id: Mapped[Optional[int]] = mapped_column(ForeignKey("locations.id"))
-    group_id: Mapped[Optional[int]] = mapped_column(ForeignKey("groups.id"))
+    manager_id: Mapped[Optional[int]] = mapped_column(ForeignKey("employees.id"), index=True)
+    location_id: Mapped[Optional[int]] = mapped_column(ForeignKey("locations.id"), index=True)
+    group_id: Mapped[Optional[int]] = mapped_column(ForeignKey("groups.id"), index=True)
 
     joining_date: Mapped[Optional[date]] = mapped_column(Date)
     employment_status: Mapped[EmploymentStatus] = mapped_column(
-        default=EmploymentStatus.ACTIVE, nullable=False
+        default=EmploymentStatus.ACTIVE, nullable=False, index=True
     )
     profile_photo: Mapped[Optional[str]] = mapped_column(String(255))
 

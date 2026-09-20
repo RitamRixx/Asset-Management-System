@@ -22,12 +22,12 @@ class AssetTransfer(Base, TimestampMixin):
     __tablename__ = "asset_transfers"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False)
-    from_employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
-    to_employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False)
+    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False, index=True)
+    from_employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False, index=True)
+    to_employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False, index=True)
 
-    requested_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
-    approved_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    requested_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), index=True)
+    approved_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), index=True)
 
     status: Mapped[TransferStatus] = mapped_column(
         default=TransferStatus.PENDING, nullable=False

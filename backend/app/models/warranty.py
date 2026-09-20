@@ -22,10 +22,10 @@ class Warranty(Base, TimestampMixin):
     __tablename__ = "warranties"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False)
+    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False, index=True)
     warranty_start: Mapped[Optional[date]] = mapped_column(Date)
     warranty_end: Mapped[Optional[date]] = mapped_column(Date)
-    vendor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("vendors.id"))
+    vendor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("vendors.id"), index=True)
     warranty_type: Mapped[Optional[str]] = mapped_column(String(100))
     warranty_reference: Mapped[Optional[str]] = mapped_column(String(150))
 

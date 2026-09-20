@@ -12,7 +12,7 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    recipient_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    recipient_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
 
     # e.g. WARRANTY_EXPIRING, LICENSE_EXPIRING, RETURN_PENDING, REPAIR_UPDATED,
     # ASSET_ASSIGNED, ONBOARDING_PENDING, EXIT_PENDING, ASSET_MISSING (section 33).

@@ -19,7 +19,7 @@ class DeviceAgent(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     device_id: Mapped[str] = mapped_column(String(150), unique=True, nullable=False)
-    asset_id: Mapped[Optional[int]] = mapped_column(ForeignKey("assets.id"))
+    asset_id: Mapped[Optional[int]] = mapped_column(ForeignKey("assets.id"), index=True)
 
     # Never store the raw token — only its hash (mirrors password handling).
     registration_token_hash: Mapped[str] = mapped_column(String(255), nullable=False)

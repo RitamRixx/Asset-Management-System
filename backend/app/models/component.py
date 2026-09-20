@@ -25,7 +25,7 @@ class AssetComponent(Base, TimestampMixin):
     __tablename__ = "asset_components"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False)
+    asset_id: Mapped[int] = mapped_column(ForeignKey("assets.id"), nullable=False, index=True)
     component_type_id: Mapped[int] = mapped_column(
         ForeignKey("component_types.id"), nullable=False
     )

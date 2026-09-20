@@ -19,7 +19,7 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    actor_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    actor_user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), index=True)
     action: Mapped[str] = mapped_column(String(100), nullable=False)
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
     entity_id: Mapped[Optional[int]] = mapped_column()
