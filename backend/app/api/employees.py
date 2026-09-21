@@ -53,11 +53,12 @@ def list_employees(
     skip: int = 0,
     limit: int = 50,
     department_id: int | None = None,
+    org_unit_id: int | None = None,
     employment_status: EmploymentStatus | None = None,
     db: Session = Depends(get_db),
 ) -> list[Employee]:
     return employee_repository.list_employees(
-        db, skip=skip, limit=limit, department_id=department_id, status_filter=employment_status
+        db, skip=skip, limit=limit, department_id=department_id, org_unit_id=org_unit_id, status_filter=employment_status
     )
 
 

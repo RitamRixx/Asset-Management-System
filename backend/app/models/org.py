@@ -59,3 +59,36 @@ class Vendor(Base, TimestampMixin):
 # imported every model module — importing this module directly at the top
 # would create a circular import with employee.py, which itself refers back
 # to Department.
+
+class OrgUnitType(Base, TimestampMixin):
+    __tablename__ = "org_unit_types"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    code: Mapped[Optional[str]] = mapped_column(String(20), unique=True)
+    typical_rank: Mapped[Optional[int]] = mapped_column()
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE", nullable=False)
+
+
+class OrgUnit(Base, TimestampMixin):
+    __tablename__ = "org_units"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    code: Mapped[Optional[str]] = mapped_column(String(20), unique=True)
+    unit_type_id: Mapped[int] = mapped_column(ForeignKey("org_unit_types.id"), nullable=False, index=True)
+    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("org_units.id"), index=True)
+
+    address: Mapped[Optional[str]] = mapped_column(String(255))
+    city: Mapped[Optional[str]] = mapped_column(String(100))
+    state: Mapped[Optional[str]] = mapped_column(String(100))
+    country: Mapped[Optional[str]] = mapped_column(String(100))
+    
+    manager_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("employees.id", use_alter=True, name="fk_org_units_manager_id")
+    )
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE", nullable=False)
+
+    unit_type: Mapped["OrgUnitType"] = relationship()
+    parent: Mapped[Optional["OrgUnit"]] = relationship(remote_side=[id], back_populates="children")
+    children: Mapped[list["OrgUnit"]] = relationship(back_populates="parent")

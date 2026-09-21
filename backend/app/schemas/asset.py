@@ -27,8 +27,12 @@ class AssetCreate(BaseModel):
     vendor_id: Optional[int] = None
     condition: AssetCondition = AssetCondition.NEW
     location_id: Optional[int] = None
+    org_unit_id: Optional[int] = None
     hostname: Optional[str] = None
     description: Optional[str] = None
+    tags: Optional[list[str]] = None
+    salvage_value: Optional[Decimal] = None
+    useful_life_years: Optional[int] = None
 
 
 class AssetUpdate(BaseModel):
@@ -38,8 +42,12 @@ class AssetUpdate(BaseModel):
     vendor_id: Optional[str] = None
     condition: Optional[AssetCondition] = None
     location_id: Optional[int] = None
+    org_unit_id: Optional[int] = None
     hostname: Optional[str] = None
     description: Optional[str] = None
+    tags: Optional[list[str]] = None
+    salvage_value: Optional[Decimal] = None
+    useful_life_years: Optional[int] = None
 
 
 class AssetStatusChange(BaseModel):
@@ -62,6 +70,11 @@ class AssetRead(BaseModel):
     status: AssetStatus
     condition: AssetCondition
     location_id: Optional[int]
+    org_unit_id: Optional[int]
     hostname: Optional[str]
     description: Optional[str]
+    tags: list[str]
+    salvage_value: Optional[Decimal]
+    useful_life_years: Optional[int]
+    depreciated_value: Optional[Decimal]
     created_at: datetime

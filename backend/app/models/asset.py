@@ -16,7 +16,8 @@ from decimal import Decimal
 from typing import Optional
 
 from sqlalchemy import Date, ForeignKey, Numeric, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import AssetCondition, AssetStatus
@@ -40,10 +41,35 @@ class Asset(Base, TimestampMixin):
 
     status: Mapped[AssetStatus] = mapped_column(default=AssetStatus.AVAILABLE, nullable=False, index=True)
     condition: Mapped[AssetCondition] = mapped_column(default=AssetCondition.NEW, nullable=False)
-    location_id: Mapped[Optional[int]] = mapped_column(ForeignKey("locations.id"), index=True)
+    location_id: Mapped[Optional[int]] = mapped_column(ForeignKey("locations.id"), index=True) # DEPRECATED
+    org_unit_id: Mapped[Optional[int]] = mapped_column(ForeignKey("org_units.id"), index=True)
+    org_unit: Mapped[Optional["OrgUnit"]] = relationship(foreign_keys=[org_unit_id]) # noqa: F821
 
     hostname: Mapped[Optional[str]] = mapped_column(String(150))
     description: Mapped[Optional[str]] = mapped_column(String(500))
 
-    # Non-assignable terminal/blocked states (business rules #1-3).
-    NON_ASSIGNABLE_STATUSES = (AssetStatus.LOST, AssetStatus.RETIRED, AssetStatus.UNDER_REPAIR)
+    tags: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, server_default='{}')
+    salvage_value: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2))
+    useful_life_years: Mapped[Optional[int]] = mapped_column()
+
+    NON_ASSIGNABLE_STATUSES = (AssetStatus.LOST, AssetStatus.RETIRED, AssetStatus.UNDER_REPAIR, AssetStatus.DISPOSED)
+
+    @property
+    def depreciated_value(self) -> Optional[Decimal]:
+        if (
+            self.purchase_cost is None
+            or self.salvage_value is None
+            or self.useful_life_years is None
+            or self.useful_life_years <= 0
+            or self.purchase_date is None
+        ):
+            return None
+            
+        from datetime import date
+        years_passed = Decimal(str((date.today() - self.purchase_date).days / 365.25))
+        if years_passed >= self.useful_life_years:
+            return self.salvage_value
+            
+        depreciation_per_year = (self.purchase_cost - self.salvage_value) / Decimal(self.useful_life_years)
+        current_value = self.purchase_cost - (years_passed * depreciation_per_year)
+        return max(self.salvage_value, round(current_value, 2))

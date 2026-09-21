@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createAsset, getInventorySummary, listAssets, type AssetCreateInput, type InventorySummary } from "@/services/assets";
 import { importAssets } from "@/services/import";
 import { listAssetTypes } from "@/services/reference";
+import OrgUnitPicker from "@/components/OrgUnitPicker";
 import type { Asset, AssetType } from "@/types";
 import { ApiError } from "@/services/api";
 
@@ -132,7 +133,7 @@ export default function AssetsPage() {
       {showImport && (
         <ImportCsvModal
           title="Import assets from CSV"
-          columnsHelp="Columns: asset_type_id (required, numeric ID), manufacturer, model, serial_number, purchase_date (YYYY-MM-DD), purchase_cost, condition (NEW/GOOD/FAIR/DAMAGED)."
+          columnsHelp="Columns: asset_type_id (required, numeric ID), manufacturer, model, serial_number, purchase_date (YYYY-MM-DD), purchase_cost, condition (NEW/GOOD/FAIR/DAMAGED), org_unit_id."
           onImport={importAssets}
           onClose={() => setShowImport(false)}
           onDone={() => refresh(q)}
@@ -214,6 +215,46 @@ function CreateAssetModal({
             className="input"
           />
         </Field>
+        <Field label="Organization Unit">
+          <OrgUnitPicker
+            value={form.org_unit_id}
+            onChange={(val) => setForm({ ...form, org_unit_id: val })}
+          />
+        </Field>
+        
+        <div className="border-t border-border pt-4 mt-2">
+          <h3 className="text-sm font-semibold text-ink mb-3">Lifecycle & Financials</h3>
+          <Field label="Tags (comma separated)">
+            <input
+              placeholder="e.g. VIP, Remote, Leased"
+              value={form.tags?.join(", ") ?? ""}
+              onChange={(e) => setForm({ ...form, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean) })}
+              className="input"
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <Field label="Salvage Value ($)">
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.salvage_value ?? ""}
+                onChange={(e) => setForm({ ...form, salvage_value: e.target.value ? Number(e.target.value) : undefined })}
+                className="input"
+              />
+            </Field>
+            <Field label="Useful Life (years)">
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={form.useful_life_years ?? ""}
+                onChange={(e) => setForm({ ...form, useful_life_years: e.target.value ? Number(e.target.value) : undefined })}
+                className="input"
+              />
+            </Field>
+          </div>
+        </div>
 
         {error && <p className="text-sm text-status-damaged">{error}</p>}
 

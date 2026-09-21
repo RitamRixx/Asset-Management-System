@@ -6,9 +6,8 @@ export interface EmployeeCreateInput {
   last_name: string;
   email: string;
   phone?: string;
-  department_id?: number;
+  org_unit_id?: number;
   designation?: string;
-  location_id?: number;
   joining_date?: string;
 }
 

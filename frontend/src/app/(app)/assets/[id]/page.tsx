@@ -12,6 +12,10 @@ import {
   getAssetComponents,
   getAssetRepairs,
   getAssetWarranties,
+  getAssetContracts,
+  createAssetContract,
+  disposeAsset,
+  listAssetSoftware,
 } from "@/services/assets";
 import {
   createReturn,
@@ -30,6 +34,9 @@ import type {
   RepairTicket,
   ReturnCondition,
   Warranty,
+  ServiceContract,
+  DisposalMethod,
+  SoftwareAssignmentRecord,
 } from "@/types";
 import { ApiError } from "@/services/api";
 
@@ -59,6 +66,8 @@ export default function AssetDetailPage() {
   const [components, setComponents] = useState<AssetComponent[]>([]);
   const [warranties, setWarranties] = useState<Warranty[]>([]);
   const [repairs, setRepairs] = useState<RepairTicket[]>([]);
+  const [contracts, setContracts] = useState<ServiceContract[]>([]);
+  const [software, setSoftware] = useState<SoftwareAssignmentRecord[]>([]);
   const [currentAssignment, setCurrentAssignment] = useState<CurrentAssignment | null>(null);
   const [documents, setDocuments] = useState<AmsDocument[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -67,6 +76,8 @@ export default function AssetDetailPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [showReturn, setShowReturn] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
+  const [showDispose, setShowDispose] = useState(false);
+  const [showAddContract, setShowAddContract] = useState(false);
 
   // Asset lifecycle actions (status changes, transfers, returns): IT/Admin
   // only, matching the backend's MANAGE_ROLES on assets/transfers/returns.
@@ -76,18 +87,22 @@ export default function AssetDetailPage() {
 
   async function refresh() {
     try {
-      const [a, c, w, r, ca] = await Promise.all([
+      const [a, c, w, r, ca, ctr, sw] = await Promise.all([
         getAsset(Number(id)),
         getAssetComponents(Number(id)),
         getAssetWarranties(Number(id)),
         getAssetRepairs(Number(id)),
         getCurrentAssignment(Number(id)),
+        getAssetContracts(Number(id)),
+        listAssetSoftware(Number(id)),
       ]);
       setAsset(a);
       setComponents(c);
       setWarranties(w);
       setRepairs(r);
       setCurrentAssignment(ca);
+      setContracts(ctr);
+      setSoftware(sw);
       if (canManageDocs) {
         listDocuments("ASSET", Number(id)).then(setDocuments).catch(() => {});
       }
@@ -136,9 +151,27 @@ export default function AssetDetailPage() {
               <Detail label="Purchase cost" value={asset.purchase_cost ? `₹${asset.purchase_cost}` : "—"} />
               <Detail label="Hostname" value={asset.hostname ?? "—"} mono />
             </dl>
+            {asset.tags && asset.tags.length > 0 && (
+              <div className="mt-4 flex gap-2 flex-wrap">
+                {asset.tags.map((tag) => (
+                  <span key={tag} className="inline-flex items-center rounded-md bg-surface px-2 py-1 text-xs font-medium text-ink">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
             {asset.description && (
               <p className="mt-4 text-sm text-subtle">{asset.description}</p>
             )}
+          </Section>
+
+          <Section title="Financials">
+            <dl className="grid grid-cols-2 gap-4 text-sm">
+              <Detail label="Purchase Cost" value={asset.purchase_cost ? `₹${asset.purchase_cost}` : "—"} />
+              <Detail label="Salvage Value" value={asset.salvage_value ? `₹${asset.salvage_value}` : "—"} />
+              <Detail label="Useful Life" value={asset.useful_life_years ? `${asset.useful_life_years} years` : "—"} />
+              <Detail label="Current Value" value={asset.depreciated_value ? `₹${asset.depreciated_value}` : "—"} />
+            </dl>
           </Section>
 
           <Section title="Hardware">
@@ -183,6 +216,29 @@ export default function AssetDetailPage() {
                 ))}
               </ul>
             )}
+          </Section>
+
+          <Section title="Software">
+            {software.length === 0 ? (
+              <p className="text-sm text-subtle">No software licenses assigned directly to this asset.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {software.map((s) => (
+                  <li key={s.id} className="flex items-center justify-between py-2 text-sm">
+                    <div>
+                      <span className="text-ink">License #{s.license_id}</span>
+                      <span className="ml-2 text-xs text-subtle">
+                        Assigned {new Date(s.assigned_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <StatusBadge status={s.status} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-2 text-xs text-subtle">
+              To assign a new license to this asset, go to the <a href="/software" className="text-primary hover:underline">Software catalog</a>.
+            </p>
           </Section>
 
           {canManageDocs && (
@@ -253,6 +309,34 @@ export default function AssetDetailPage() {
             )}
           </Section>
 
+          <Section title="Service Contracts">
+            {contracts.length === 0 ? (
+              <p className="text-sm text-subtle">No service contracts recorded.</p>
+            ) : (
+              <ul className="space-y-3">
+                {contracts.map((c) => (
+                  <li key={c.id}>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-sm text-ink">{c.contract_number ?? "Contract"}</span>
+                      {c.cost && <span className="text-xs font-medium text-ink">₹{c.cost}</span>}
+                    </div>
+                    <p className="text-xs text-subtle">
+                      {new Date(c.start_date).toLocaleDateString()} – {new Date(c.end_date).toLocaleDateString()}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canManage && (
+              <button
+                onClick={() => setShowAddContract(true)}
+                className="mt-3 rounded-md text-xs font-medium text-primary hover:text-primary-dark"
+              >
+                + Add Contract
+              </button>
+            )}
+          </Section>
+
           {canManage && (
             <Section title="Change status">
               <p className="mb-3 text-xs text-subtle">
@@ -263,7 +347,10 @@ export default function AssetDetailPage() {
                 {MANUAL_STATUSES.filter((s) => s !== asset.status).map((s) => (
                   <button
                     key={s}
-                    onClick={() => setPendingStatus(s)}
+                    onClick={() => {
+                      if (s === "DISPOSED") setShowDispose(true);
+                      else setPendingStatus(s);
+                    }}
                     className="rounded-md border border-border px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface"
                   >
                     {s.replaceAll("_", " ")}
@@ -320,7 +407,194 @@ export default function AssetDetailPage() {
           }}
         />
       )}
+
+      {showDispose && (
+        <DisposeModal
+          asset={asset}
+          onClose={() => setShowDispose(false)}
+          onDone={() => {
+            setShowDispose(false);
+            refresh();
+          }}
+        />
+      )}
+
+      {showAddContract && (
+        <AddContractModal
+          assetId={asset.id}
+          onClose={() => setShowAddContract(false)}
+          onDone={() => {
+            setShowAddContract(false);
+            refresh();
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function DisposeModal({
+  asset,
+  onClose,
+  onDone,
+}: {
+  asset: Asset;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [method, setMethod] = useState<DisposalMethod>("SCRAPPED");
+  const [value, setValue] = useState<number | "">("");
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+    try {
+      await disposeAsset(asset.id, {
+        disposal_date: new Date().toISOString().split("T")[0],
+        disposal_method: method,
+        disposal_value: value || undefined,
+        notes: notes || undefined,
+      });
+      onDone();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not dispose asset.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title="Dispose Asset">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-ink">Disposal Method</label>
+          <select value={method} onChange={(e) => setMethod(e.target.value as DisposalMethod)} className="input">
+            <option value="SOLD">Sold</option>
+            <option value="SCRAPPED">Scrapped</option>
+            <option value="DONATED">Donated</option>
+            <option value="RECYCLED">Recycled</option>
+            <option value="RETURNED_TO_LESSOR">Returned to Lessor</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-ink">Disposal Value ($)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={value}
+            onChange={(e) => setValue(e.target.value ? Number(e.target.value) : "")}
+            className="input"
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-ink">Notes</label>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="input" />
+        </div>
+        {error && <p className="text-sm text-status-damaged">{error}</p>}
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-surface">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="rounded-md bg-status-damaged px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+          >
+            {submitting ? "Disposing…" : "Dispose Asset"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function AddContractModal({
+  assetId,
+  onClose,
+  onDone,
+}: {
+  assetId: number;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [contractNumber, setContractNumber] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [cost, setCost] = useState<number | "">("");
+  const [notes, setNotes] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!startDate || !endDate) {
+      setError("Start and end dates are required.");
+      return;
+    }
+    setError(null);
+    setSubmitting(true);
+    try {
+      await createAssetContract(assetId, {
+        contract_number: contractNumber || null,
+        start_date: startDate,
+        end_date: endDate,
+        cost: cost ? String(cost) : null,
+        vendor_id: null,
+        notes: notes || null,
+      });
+      onDone();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Could not add contract.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title="Add Service Contract">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-ink">Contract Number</label>
+          <input value={contractNumber} onChange={(e) => setContractNumber(e.target.value)} className="input" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-ink">Start Date</label>
+            <input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} className="input" />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-ink">End Date</label>
+            <input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} className="input" />
+          </div>
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-ink">Cost ($)</label>
+          <input type="number" step="0.01" min="0" value={cost} onChange={(e) => setCost(e.target.value ? Number(e.target.value) : "")} className="input" />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-ink">Notes</label>
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="input" />
+        </div>
+        {error && <p className="text-sm text-status-damaged">{error}</p>}
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-surface">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark disabled:opacity-60"
+          >
+            {submitting ? "Adding…" : "Add Contract"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

@@ -55,7 +55,11 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
 def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)) -> Token:
     user = password_reset_service.reset_password(db, payload.token, payload.new_password)
     db.commit()
-    token = create_access_token(subject=str(user.id), extra_claims={"role": user.role.value})
+    token, jti, expire = create_access_token(subject=str(user.id), extra_claims={"role": user.role.value})
+    from app.models.issued_token import IssuedToken
+    from app.repositories import issued_token_repository
+    issued_token_repository.create(db, IssuedToken(jti=jti, user_id=user.id, expires_at=expire))
+    db.commit()
     return Token(access_token=token)
 
 @router.post("/auth/logout", status_code=status.HTTP_200_OK)

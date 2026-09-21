@@ -50,6 +50,14 @@ def list_assignments_for_employee(db: Session, employee_id: int) -> list[Softwar
     return list(db.scalars(stmt))
 
 
+def list_assignments_for_asset(db: Session, asset_id: int) -> list[SoftwareAssignment]:
+    stmt = select(SoftwareAssignment).where(
+        SoftwareAssignment.asset_id == asset_id,
+        SoftwareAssignment.status == SoftwareAssignmentStatus.ACTIVE,
+    )
+    return list(db.scalars(stmt))
+
+
 def get_assignment(db: Session, assignment_id: int) -> Optional[SoftwareAssignment]:
     return db.get(SoftwareAssignment, assignment_id)
 

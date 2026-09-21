@@ -11,8 +11,12 @@ from app.services import audit_service
 
 
 def assign_license(
-    db: Session, *, employee_id: int, license_: SoftwareLicense, actor_user_id: int
+    db: Session, *, employee_id: int | None = None, asset_id: int | None = None, license_: SoftwareLicense, actor_user_id: int
 ) -> SoftwareAssignment:
+    if (employee_id is None) == (asset_id is None):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Must provide exactly one of employee_id or asset_id."
+        )
     if license_.expiry_date is not None and license_.expiry_date < date.today():
         # Business rule #12.
         raise HTTPException(
@@ -27,6 +31,7 @@ def assign_license(
 
     assignment = SoftwareAssignment(
         employee_id=employee_id,
+        asset_id=asset_id,
         license_id=license_.id,
         status=SoftwareAssignmentStatus.ACTIVE,
     )
@@ -41,7 +46,7 @@ def assign_license(
         action="SOFTWARE_ASSIGNED",
         entity_type="SoftwareAssignment",
         entity_id=assignment.id,
-        new_value={"employee_id": employee_id, "license_id": license_.id},
+        new_value={"employee_id": employee_id, "asset_id": asset_id, "license_id": license_.id},
     )
     return assignment
 

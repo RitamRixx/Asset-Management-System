@@ -1,13 +1,22 @@
 """Software catalog, licenses, and per-employee license assignment (sections 17-18)."""
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import CheckConstraint, Date, DateTime, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.enums import LicenseStatus, SoftwareAssignmentStatus
 from app.models.mixins import TimestampMixin
+
+
+class SoftwareCategory(Base, TimestampMixin):
+    __tablename__ = "software_categories"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="ACTIVE", nullable=False)
 
 
 class Software(Base, TimestampMixin):
@@ -17,8 +26,10 @@ class Software(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     publisher: Mapped[Optional[str]] = mapped_column(String(150))
     version: Mapped[Optional[str]] = mapped_column(String(50))
-    category: Mapped[Optional[str]] = mapped_column(String(100))
+    category_id: Mapped[Optional[int]] = mapped_column(ForeignKey("software_categories.id"), index=True)
     description: Mapped[Optional[str]] = mapped_column(String(500))
+
+    category: Mapped[Optional["SoftwareCategory"]] = relationship()
 
 
 class SoftwareLicense(Base, TimestampMixin):
@@ -36,6 +47,8 @@ class SoftwareLicense(Base, TimestampMixin):
     seats: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     assigned_seats: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    purchase_cost: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2))
+
     purchase_date: Mapped[Optional[date]] = mapped_column(Date)
     expiry_date: Mapped[Optional[date]] = mapped_column(Date)
     vendor_id: Mapped[Optional[int]] = mapped_column(ForeignKey("vendors.id"), index=True)
@@ -47,9 +60,17 @@ class SoftwareAssignment(Base, TimestampMixin):
     'which software is assigned to an employee' question)."""
 
     __tablename__ = "software_assignments"
+    __table_args__ = (
+        # Enforce exactly one of employee_id or asset_id is set
+        CheckConstraint(
+            "(employee_id IS NOT NULL AND asset_id IS NULL) OR (employee_id IS NULL AND asset_id IS NOT NULL)",
+            name="chk_assignment_target_mutually_exclusive",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False, index=True)
+    employee_id: Mapped[Optional[int]] = mapped_column(ForeignKey("employees.id"), index=True)
+    asset_id: Mapped[Optional[int]] = mapped_column(ForeignKey("assets.id"), index=True)
     license_id: Mapped[int] = mapped_column(ForeignKey("software_licenses.id"), nullable=False, index=True)
     assigned_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

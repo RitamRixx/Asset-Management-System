@@ -86,6 +86,8 @@ def import_employees(db: Session, file_bytes: bytes, actor_user_id: int) -> dict
             data["department_id"] = int(row["department_id"])
         if row.get("location_id"):
             data["location_id"] = int(row["location_id"])
+        if row.get("org_unit_id"):
+            data["org_unit_id"] = int(row["org_unit_id"])
         if row.get("designation"):
             data["designation"] = row["designation"].strip()
         if row.get("joining_date"):
@@ -124,6 +126,8 @@ def import_assets(db: Session, file_bytes: bytes, actor_user_id: int) -> dict:
             data["purchase_cost"] = row["purchase_cost"].strip()
         if row.get("condition"):
             data["condition"] = AssetCondition(row["condition"].strip().upper())
+        if row.get("org_unit_id"):
+            data["org_unit_id"] = int(row["org_unit_id"])
 
         return asset_service.create_asset(db, data, actor_user_id)
 

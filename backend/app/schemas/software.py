@@ -10,6 +10,8 @@ not just unauthorized ones.
 from datetime import date, datetime
 from typing import Optional
 
+from decimal import Decimal
+
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from app.models.enums import LicenseStatus, SoftwareAssignmentStatus
@@ -19,7 +21,7 @@ class SoftwareCreate(BaseModel):
     name: str
     publisher: Optional[str] = None
     version: Optional[str] = None
-    category: Optional[str] = None
+    category_id: Optional[int] = None
     description: Optional[str] = None
 
 
@@ -29,7 +31,7 @@ class SoftwareRead(BaseModel):
     name: str
     publisher: Optional[str]
     version: Optional[str]
-    category: Optional[str]
+    category_id: Optional[int]
     description: Optional[str]
 
 
@@ -41,6 +43,7 @@ class LicenseCreate(BaseModel):
     purchase_date: Optional[date] = None
     expiry_date: Optional[date] = None
     vendor_id: Optional[int] = None
+    purchase_cost: Optional[Decimal] = None
 
 
 class LicenseRead(BaseModel):
@@ -54,6 +57,7 @@ class LicenseRead(BaseModel):
     purchase_date: Optional[date]
     expiry_date: Optional[date]
     vendor_id: Optional[int]
+    purchase_cost: Optional[Decimal]
     status: LicenseStatus
     masked_key: Optional[str] = None
 
@@ -73,14 +77,16 @@ class LicenseRead(BaseModel):
 
 
 class SoftwareAssignmentCreate(BaseModel):
-    employee_id: int
+    employee_id: Optional[int] = None
+    asset_id: Optional[int] = None
     license_id: int
 
 
 class SoftwareAssignmentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    employee_id: int
+    employee_id: Optional[int]
+    asset_id: Optional[int]
     license_id: int
     assigned_at: datetime
     revoked_at: Optional[datetime]

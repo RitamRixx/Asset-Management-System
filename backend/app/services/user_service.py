@@ -14,8 +14,10 @@ from app.models.user import User
 from app.services import audit_service, token_service
 
 
+from typing import Optional
+
 def change_password(
-    db: Session, *, user: User, current_password: str, new_password: str
+    db: Session, *, user: User, current_password: str, new_password: str, except_jti: Optional[str] = None
 ) -> None:
     if user.auth_provider != AuthProvider.LOCAL or user.password_hash is None:
         raise HTTPException(
@@ -36,4 +38,4 @@ def change_password(
     # request will get a fresh token from a subsequent login as normal;
     # this doesn't revoke the token being used *right now* to make this
     # call (see api/users.py — that'd log the caller out mid-request).
-    token_service.revoke_all_for_user(db, user.id)
+    token_service.revoke_all_for_user(db, user.id, except_jti=except_jti)

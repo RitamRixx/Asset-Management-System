@@ -36,6 +36,14 @@ class AssetStatus(str, enum.Enum):
     DISPOSED = "DISPOSED"
 
 
+class DisposalMethod(str, enum.Enum):
+    SOLD = "SOLD"
+    SCRAPPED = "SCRAPPED"
+    DONATED = "DONATED"
+    RECYCLED = "RECYCLED"
+    RETURNED_TO_LESSOR = "RETURNED_TO_LESSOR"
+
+
 class AssetCondition(str, enum.Enum):
     NEW = "NEW"
     GOOD = "GOOD"

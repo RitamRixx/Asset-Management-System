@@ -21,11 +21,14 @@ def list_employees(
     skip: int = 0,
     limit: int = 50,
     department_id: Optional[int] = None,
+    org_unit_id: Optional[int] = None,
     status_filter: Optional[EmploymentStatus] = None,
 ) -> list[Employee]:
     stmt = select(Employee)
     if department_id is not None:
         stmt = stmt.where(Employee.department_id == department_id)
+    if org_unit_id is not None:
+        stmt = stmt.where(Employee.org_unit_id == org_unit_id)
     if status_filter is not None:
         stmt = stmt.where(Employee.employment_status == status_filter)
     stmt = stmt.offset(skip).limit(limit)

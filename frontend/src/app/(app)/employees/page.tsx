@@ -10,8 +10,9 @@ import ImportCsvModal from "@/components/ImportCsvModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { createEmployee, listEmployees, type EmployeeCreateInput } from "@/services/employees";
 import { importEmployees } from "@/services/import";
-import { listDepartments } from "@/services/reference";
-import type { Department, Employee } from "@/types";
+import { listOrgUnits } from "@/services/org_units";
+import OrgUnitPicker from "@/components/OrgUnitPicker";
+import type { Employee, OrgUnit } from "@/types";
 import { ApiError } from "@/services/api";
 
 export default function EmployeesPage() {
@@ -23,22 +24,22 @@ export default function EmployeesPage() {
 
   const canCreate = user?.role === "ADMIN" || user?.role === "HR";
 
-  const { data: departments = [] } = useQuery({
-    queryKey: ["departments"],
-    queryFn: listDepartments,
+  const { data: orgUnits = [] } = useQuery({
+    queryKey: ["orgUnits"],
+    queryFn: listOrgUnits,
   });
 
   const { data: employees = [], isLoading: loading } = useQuery({
     queryKey: ["employees"],
-    queryFn: listEmployees,
+    queryFn: () => listEmployees(),
   });
 
   function refresh() {
     queryClient.invalidateQueries({ queryKey: ["employees"] });
   }
 
-  const departmentName = (id: number | null) =>
-    departments.find((d) => d.id === id)?.name ?? "—";
+  const orgUnitName = (id: number | null) =>
+    orgUnits.find((u) => u.id === id)?.name ?? "—";
 
   return (
     <div>
@@ -78,7 +79,7 @@ export default function EmployeesPage() {
             { header: "Code", render: (e) => <span className="font-mono text-xs">{e.employee_code}</span> },
             { header: "Name", render: (e) => <span className="font-medium text-ink">{e.first_name} {e.last_name}</span> },
             { header: "Email", render: (e) => e.email },
-            { header: "Department", render: (e) => departmentName(e.department_id) },
+            { header: "Org Unit", render: (e) => orgUnitName(e.org_unit_id ?? null) },
             { header: "Designation", render: (e) => e.designation ?? "—" },
             { header: "Status", render: (e) => <StatusBadge status={e.employment_status} /> },
           ]}
@@ -87,7 +88,6 @@ export default function EmployeesPage() {
 
       {showCreate && (
         <CreateEmployeeModal
-          departments={departments}
           onClose={() => setShowCreate(false)}
           onCreated={() => {
             setShowCreate(false);
@@ -99,7 +99,7 @@ export default function EmployeesPage() {
       {showImport && (
         <ImportCsvModal
           title="Import employees from CSV"
-          columnsHelp="Columns: first_name, last_name, email (required), department_id, location_id, designation, joining_date (YYYY-MM-DD)."
+          columnsHelp="Columns: first_name, last_name, email (required), org_unit_id, designation, joining_date (YYYY-MM-DD)."
           onImport={importEmployees}
           onClose={() => setShowImport(false)}
           onDone={refresh}
@@ -110,11 +110,9 @@ export default function EmployeesPage() {
 }
 
 function CreateEmployeeModal({
-  departments,
   onClose,
   onCreated,
 }: {
-  departments: Department[];
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -170,21 +168,11 @@ function CreateEmployeeModal({
             className="input"
           />
         </Field>
-        <Field label="Department">
-          <select
-            value={form.department_id ?? ""}
-            onChange={(e) =>
-              setForm({ ...form, department_id: e.target.value ? Number(e.target.value) : undefined })
-            }
-            className="input"
-          >
-            <option value="">—</option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
+        <Field label="Organization Unit">
+          <OrgUnitPicker
+            value={form.org_unit_id}
+            onChange={(val) => setForm({ ...form, org_unit_id: val })}
+          />
         </Field>
         <Field label="Designation">
           <input

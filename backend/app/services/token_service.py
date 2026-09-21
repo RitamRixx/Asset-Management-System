@@ -15,12 +15,16 @@ from app.models.revoked_token import RevokedToken
 from app.repositories import issued_token_repository, revoked_token_repository
 
 
-def revoke_all_for_user(db: Session, user_id: int) -> int:
+from typing import Optional
+
+def revoke_all_for_user(db: Session, user_id: int, except_jti: Optional[str] = None) -> int:
     """Returns the number of tokens revoked, mainly for audit/logging."""
     now = datetime.now(timezone.utc)
     active_tokens = issued_token_repository.list_active_for_user(db, user_id, now=now)
 
     for issued in active_tokens:
+        if except_jti is not None and issued.jti == except_jti:
+            continue
         revoked_token_repository.create(
             db,
             RevokedToken(jti=issued.jti, user_id=user_id, expires_at=issued.expires_at),

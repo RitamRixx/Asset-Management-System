@@ -16,6 +16,7 @@ class EmployeeCreate(BaseModel):
     designation: Optional[str] = None
     manager_id: Optional[int] = None
     location_id: Optional[int] = None
+    org_unit_id: Optional[int] = None
     group_id: Optional[int] = None
     joining_date: Optional[date] = None
     profile_photo: Optional[str] = None
@@ -29,6 +30,7 @@ class EmployeeUpdate(BaseModel):
     designation: Optional[str] = None
     manager_id: Optional[int] = None
     location_id: Optional[int] = None
+    org_unit_id: Optional[int] = None
     group_id: Optional[int] = None
     profile_photo: Optional[str] = None
 
@@ -50,6 +52,7 @@ class EmployeeRead(BaseModel):
     designation: Optional[str]
     manager_id: Optional[int]
     location_id: Optional[int]
+    org_unit_id: Optional[int]
     group_id: Optional[int]
     joining_date: Optional[date]
     employment_status: EmploymentStatus

@@ -31,7 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
     agent, assets, assignments, audit, auth, components, dashboards,
-    documents, employees, groups, health, notifications,organization, reference,
+    documents, employees, groups, health, notifications, org, organization, reference,
     reports, repairs, returns_transfers, software, sso, users, warranties,
 )
 from app.core.config import settings
@@ -75,6 +75,7 @@ app.include_router(reference.router, prefix=settings.API_V1_PREFIX)
 app.include_router(sso.router, prefix=settings.API_V1_PREFIX, tags=["auth"])
 app.include_router(groups.router, prefix=settings.API_V1_PREFIX)
 app.include_router(organization.router, prefix=settings.API_V1_PREFIX)
+app.include_router(org.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/")

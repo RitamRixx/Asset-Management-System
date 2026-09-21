@@ -4,7 +4,7 @@ User management router (Phase 4/5).
 Only Admins can create, list, or disable accounts (section 4). Any
 authenticated user can read their own `/users/me`.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_role
@@ -16,6 +16,7 @@ from app.models.user import User
 from app.repositories import user_repository
 from app.schemas.user import ChangePasswordRequest, UserCreate, UserRead, UserStatusUpdate
 from app.services import audit_service, token_service, user_service
+from app.core.security import decode_access_token
 
 router = APIRouter()
 
@@ -123,14 +124,21 @@ def update_user_status(
 @router.post("/users/me/change-password", status_code=status.HTTP_200_OK)
 def change_my_password(
     payload: ChangePasswordRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> dict:
+    auth_header = request.headers.get("Authorization", "")
+    raw_token = auth_header.removeprefix("Bearer ").strip()
+    token_payload = decode_access_token(raw_token)
+    except_jti = token_payload.get("jti") if token_payload else None
+
     user_service.change_password(
         db,
         user=current_user,
         current_password=payload.current_password,
         new_password=payload.new_password,
+        except_jti=except_jti,
     )
     db.commit()
     return {"message": "Password changed successfully."}

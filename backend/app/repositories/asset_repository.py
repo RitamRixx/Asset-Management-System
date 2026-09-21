@@ -27,6 +27,7 @@ def list_assets(
     limit: int = 50,
     asset_type_id: Optional[int] = None,
     location_id: Optional[int] = None,
+    org_unit_id: Optional[int] = None,
     status_filter: Optional[AssetStatus] = None,
     manufacturer: Optional[str] = None,
     model: Optional[str] = None,
@@ -38,6 +39,8 @@ def list_assets(
         stmt = stmt.where(Asset.asset_type_id == asset_type_id)
     if location_id is not None:
         stmt = stmt.where(Asset.location_id == location_id)
+    if org_unit_id is not None:
+        stmt = stmt.where(Asset.org_unit_id == org_unit_id)
     if status_filter is not None:
         stmt = stmt.where(Asset.status == status_filter)
     if manufacturer is not None:

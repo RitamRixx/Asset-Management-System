@@ -34,22 +34,10 @@ def get_current_user(
     if payload is None or "sub" not in payload:
         raise credentials_error
 
-    jti = payload.get("jti")
-    if jti is not None:
-        from app.repositories import revoked_token_repository
-        if revoked_token_repository.is_revoked(db, jti):
-            raise credentials_error
-
     user = db.get(User, int(payload["sub"]))
     if user is None:
         raise credentials_error
 
-    # if user.status != UserStatus.ACTIVE:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="Account is disabled",
-    #     )
-    
     if user.status != UserStatus.ACTIVE:
         detail = {
             UserStatus.DISABLED: "Account is disabled",
@@ -57,6 +45,12 @@ def get_current_user(
             UserStatus.PENDING: "Account is pending activation",
         }.get(user.status, "Account is not active")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
+
+    jti = payload.get("jti")
+    if jti is not None:
+        from app.repositories import revoked_token_repository
+        if revoked_token_repository.is_revoked(db, jti):
+            raise credentials_error
 
     return user
 

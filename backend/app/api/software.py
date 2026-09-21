@@ -84,7 +84,7 @@ def assign_license(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "License not found")
 
     assignment = software_service.assign_license(
-        db, employee_id=payload.employee_id, license_=license_, actor_user_id=current_user.id
+        db, employee_id=payload.employee_id, asset_id=payload.asset_id, license_=license_, actor_user_id=current_user.id
     )
     db.commit()
     db.refresh(assignment)
@@ -119,3 +119,40 @@ def revoke_assignment(
 )
 def list_employee_software(employee_id: int, db: Session = Depends(get_db)) -> list[SoftwareAssignment]:
     return software_repository.list_assignments_for_employee(db, employee_id)
+
+
+@router.get(
+    "/assets/{asset_id}/software",
+    response_model=list[SoftwareAssignmentRead],
+    dependencies=[Depends(require_role(*STAFF_ROLES))],
+)
+def list_asset_software(asset_id: int, db: Session = Depends(get_db)) -> list[SoftwareAssignment]:
+    # We will need to implement list_assignments_for_asset in software_repository
+    return software_repository.list_assignments_for_asset(db, asset_id)
+
+
+@router.get(
+    "/licenses/{license_id}/key",
+    dependencies=[Depends(require_role(*MANAGE_ROLES))],
+)
+def get_license_key(
+    license_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, str | None]:
+    license_ = software_repository.get_license(db, license_id)
+    if license_ is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "License not found")
+
+    from app.services import audit_service
+    audit_service.log_action(
+        db,
+        actor_user_id=current_user.id,
+        action="LICENSE_KEY_VIEWED",
+        entity_type="SoftwareLicense",
+        entity_id=license_.id,
+        new_value={"key_viewed": True},
+    )
+    db.commit()
+
+    return {"license_key": license_.license_key}

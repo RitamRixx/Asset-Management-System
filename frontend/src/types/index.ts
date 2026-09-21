@@ -13,6 +13,13 @@ export type AssetStatus =
   | "RETIRED"
   | "DISPOSED";
 
+export type DisposalMethod =
+  | "SOLD"
+  | "SCRAPPED"
+  | "DONATED"
+  | "RECYCLED"
+  | "RETURNED_TO_LESSOR";
+
 export type AssetCondition = "NEW" | "GOOD" | "FAIR" | "DAMAGED";
 
 export type EmploymentStatus =
@@ -65,6 +72,7 @@ export interface Employee {
   designation: string | null;
   manager_id: number | null;
   location_id: number | null;
+  org_unit_id: number | null;
   group_id: number | null;
   joining_date: string | null;
   employment_status: EmploymentStatus;
@@ -84,8 +92,13 @@ export interface Asset {
   status: AssetStatus;
   condition: AssetCondition;
   location_id: number | null;
+  org_unit_id: number | null;
   hostname: string | null;
   description: string | null;
+  tags: string[];
+  salvage_value: string | null;
+  useful_life_years: number | null;
+  depreciated_value?: string | null;
   created_at: string;
 }
 
@@ -98,6 +111,29 @@ export interface AssignmentItem {
   returned_at: string | null;
   return_condition: ReturnCondition | null;
   notes: string | null;
+}
+
+export interface ServiceContract {
+  id: number;
+  asset_id: number;
+  vendor_id: number | null;
+  contract_number: string | null;
+  start_date: string;
+  end_date: string;
+  cost: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface AssetDisposal {
+  id: number;
+  asset_id: number;
+  disposal_date: string;
+  disposal_method: DisposalMethod;
+  disposal_value: string | null;
+  authorized_by_id: number;
+  notes: string | null;
+  created_at: string;
 }
 
 export interface AssetComponent {
@@ -114,7 +150,8 @@ export interface AssetComponent {
 
 export interface SoftwareAssignmentRecord {
   id: number;
-  employee_id: number;
+  employee_id: number | null;
+  asset_id: number | null;
   license_id: number;
   assigned_at: string;
   revoked_at: string | null;
@@ -165,7 +202,7 @@ export interface Software {
   name: string;
   publisher: string | null;
   version: string | null;
-  category: string | null;
+  category_id: number | null;
   description: string | null;
 }
 
@@ -178,6 +215,7 @@ export interface License {
   purchase_date: string | null;
   expiry_date: string | null;
   vendor_id: number | null;
+  purchase_cost: string | null;
   status: LicenseStatus;
   masked_key: string | null;
 }
@@ -201,6 +239,28 @@ export interface Department {
   status: string;
 }
 
+export interface OrgUnitType {
+  id: number;
+  name: string;
+  code: string | null;
+  typical_rank: number | null;
+  status: string;
+}
+
+export interface OrgUnit {
+  id: number;
+  name: string;
+  code: string | null;
+  unit_type_id: number;
+  parent_id: number | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  manager_id: number | null;
+  status: string;
+}
+
 export interface Location {
   id: number;
   name: string;
@@ -208,10 +268,23 @@ export interface Location {
   status: string;
 }
 
+export interface AssetCategory {
+  id: number;
+  name: string;
+  status: string;
+}
+
+export interface SoftwareCategory {
+  id: number;
+  name: string;
+  status: string;
+}
+
 export interface AssetType {
   id: number;
   name: string;
   code: string | null;
+  category_id: number | null;
   status: string;
 }
 

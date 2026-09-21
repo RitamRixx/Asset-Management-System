@@ -67,7 +67,7 @@ All of Employees, Assets, Components, Software/Licenses, Assignments, Returns, T
 - **Frontend not yet wired to this** — `BrandContext.tsx` and the Settings page's email-notification toggle still read/write `localStorage` only. This is a known, explicit gap (see §3), not an oversight.
 
 ### Database migration chain
-Current head: **`d4e5f6a7b8c9`**. Full chain: `905d66c2055a` (initial schema) → `a1b2c3d4e5f6` (groups, password reset tokens, user auth-provider/lockout fields) → `b2c3d4e5f6a7` (organization_settings) → `c3d4e5f6a7b8` (revoked_tokens) → `d4e5f6a7b8c9` (issued_tokens). **Never branch off an earlier revision — always chain off the current head.**
+Current head: **`f1g2h3i4j5k6`**. Full chain: `905d66c2055a` (initial schema) → `a1b2c3d4e5f6` (groups, password reset tokens, user auth-provider/lockout fields) → `b2c3d4e5f6a7` (organization_settings) → `c3d4e5f6a7b8` (revoked_tokens) → `d4e5f6a7b8c9` (issued_tokens) → `f1g2h3i4j5k6` (Phase A: org_hierarchy). **Never branch off an earlier revision — always chain off the current head.**
 
 ---
 
@@ -156,3 +156,7 @@ Reports beyond the 3 built types, S3/GCS document storage (currently local disk)
 - IAM Phase 9: password strength policy, `/users/me/change-password`, `/auth/logout` + JWT denylist, migration `c3d4e5f6a7b8`. Mid-session revocation flagged as still-open at this point.
 - IAM Phase 10: mass session revocation (`issued_tokens`, migration `d4e5f6a7b8c9`) + hCaptcha on login. `create_access_token`'s return signature changed to a 3-tuple as part of this — a breaking change to an existing function, called out explicitly since it's easy to miss.
 - This file itself was restructured from a pure changelog format (which left a new session with no map of current state or forward plan) into the current state/plan/rules/history structure, per Ritam's feedback that the old version wasn't usable for onboarding a fresh Claude session.
+- Phase A (Org Hierarchy): Replaced flat Department/Location with recursive `OrgUnit` tree structure (migration `f1g2h3i4j5k6`), built `OrgUnitPicker` and Admin UI.
+- Phase B (Asset & Software Taxonomy): Added `category` to AssetType, added `SoftwareCategory` lookup table, repointed Asset locations to `org_units.id`.
+- Phase C (Lifecycle Fields): Added `asset_tag` to Asset, reused Document for PO/Invoice, added `ServiceContract` model, depreciation fields (`depreciation_method`, `useful_life_months`), added `AssetDisposal` workflow and reports.
+- Phase D (License Management): Added `purchase_cost` to License, enabled device-based assignment by adding `asset_id` to `SoftwareAssignment` (mutually exclusive with `employee_id`), added secure `LICENSE_KEY_VIEWED` key reveal flow.

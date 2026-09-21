@@ -16,8 +16,10 @@ from app.models.enums import AssetStatus
 from app.models.user import User
 from app.repositories import asset_repository
 from app.schemas.asset import AssetCreate, AssetRead, AssetStatusChange, AssetUpdate
+from app.schemas.asset_disposal import AssetDisposalCreate, AssetDisposalRead
+from app.schemas.service_contract import ServiceContractCreate, ServiceContractRead, ServiceContractUpdate
 from app.schemas.import_result import ImportResult
-from app.services import asset_service, import_service
+from app.services import asset_service, import_service, asset_disposal_service, service_contract_service
 
 router = APIRouter(prefix="/assets", tags=["assets"])
 
@@ -46,6 +48,7 @@ def list_assets(
     limit: int = 50,
     asset_type_id: int | None = None,
     location_id: int | None = None,
+    org_unit_id: int | None = None,
     status_filter: AssetStatus | None = None,
     manufacturer: str | None = None,
     model: str | None = None,
@@ -59,6 +62,7 @@ def list_assets(
         limit=limit,
         asset_type_id=asset_type_id,
         location_id=location_id,
+        org_unit_id=org_unit_id,
         status_filter=status_filter,
         manufacturer=manufacturer,
         model=model,
@@ -143,3 +147,85 @@ def change_asset_status(
     db.commit()
     db.refresh(asset)
     return asset
+
+
+@router.post(
+    "/{asset_id}/dispose",
+    response_model=AssetDisposalRead,
+    dependencies=[Depends(require_role(*MANAGE_ROLES))],
+)
+def dispose_asset(
+    asset_id: int,
+    payload: AssetDisposalCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    asset = asset_repository.get_by_id(db, asset_id)
+    if asset is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Asset not found")
+
+    disposal = asset_disposal_service.dispose_asset(db, asset, payload.model_dump(), current_user.id)
+    db.commit()
+    db.refresh(disposal)
+    return disposal
+
+
+@router.get(
+    "/{asset_id}/contracts",
+    response_model=list[ServiceContractRead],
+    dependencies=[Depends(require_role(*STAFF_ROLES))],
+)
+def list_contracts(
+    asset_id: int,
+    db: Session = Depends(get_db),
+):
+    asset = asset_repository.get_by_id(db, asset_id)
+    if asset is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Asset not found")
+        
+    return service_contract_service.list_contracts_for_asset(db, asset_id)
+
+
+@router.post(
+    "/{asset_id}/contracts",
+    response_model=ServiceContractRead,
+    dependencies=[Depends(require_role(*MANAGE_ROLES))],
+)
+def create_contract(
+    asset_id: int,
+    payload: ServiceContractCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    asset = asset_repository.get_by_id(db, asset_id)
+    if asset is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Asset not found")
+        
+    contract = service_contract_service.create_contract(db, asset_id, payload.model_dump(), current_user.id)
+    db.commit()
+    db.refresh(contract)
+    return contract
+
+
+@router.patch(
+    "/{asset_id}/contracts/{contract_id}",
+    response_model=ServiceContractRead,
+    dependencies=[Depends(require_role(*MANAGE_ROLES))],
+)
+def update_contract(
+    asset_id: int,
+    contract_id: int,
+    payload: ServiceContractUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from app.models.service_contract import ServiceContract
+    contract = db.get(ServiceContract, contract_id)
+    if contract is None or contract.asset_id != asset_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Service contract not found")
+        
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    contract = service_contract_service.update_contract(db, contract, updates, current_user.id)
+    db.commit()
+    db.refresh(contract)
+    return contract

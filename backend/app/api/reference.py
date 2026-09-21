@@ -14,9 +14,12 @@ from sqlalchemy.orm import Session
 from app.api.deps import require_role
 from app.core.database import get_db
 from app.core.permissions import Role
-from app.models.asset_type import AssetType, ComponentType
-from app.models.org import Department, Location, Vendor
+from app.models.asset_type import AssetType, ComponentType, AssetCategory
+from app.models.org import Department, Location, Vendor, OrgUnitType
+from app.models.software import SoftwareCategory
 from app.schemas.reference import (
+    AssetCategoryCreate,
+    AssetCategoryRead,
     AssetTypeCreate,
     AssetTypeRead,
     ComponentTypeCreate,
@@ -25,6 +28,10 @@ from app.schemas.reference import (
     DepartmentRead,
     LocationCreate,
     LocationRead,
+    OrgUnitTypeCreate,
+    OrgUnitTypeRead,
+    SoftwareCategoryCreate,
+    SoftwareCategoryRead,
     VendorCreate,
     VendorRead,
 )
@@ -64,6 +71,9 @@ def _register_lookup_crud(prefix: str, model, create_schema, read_schema):
 
 _register_lookup_crud("/departments", Department, DepartmentCreate, DepartmentRead)
 _register_lookup_crud("/locations", Location, LocationCreate, LocationRead)
+_register_lookup_crud("/org-unit-types", OrgUnitType, OrgUnitTypeCreate, OrgUnitTypeRead)
 _register_lookup_crud("/vendors", Vendor, VendorCreate, VendorRead)
+_register_lookup_crud("/asset-categories", AssetCategory, AssetCategoryCreate, AssetCategoryRead)
 _register_lookup_crud("/asset-types", AssetType, AssetTypeCreate, AssetTypeRead)
 _register_lookup_crud("/component-types", ComponentType, ComponentTypeCreate, ComponentTypeRead)
+_register_lookup_crud("/software-categories", SoftwareCategory, SoftwareCategoryCreate, SoftwareCategoryRead)

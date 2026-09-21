@@ -96,6 +96,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/repairs", label: "Repairs", roles: ["ADMIN", "HR", "IT_SUPPORT"] },
   { href: "/reports", label: "Reports", roles: ["ADMIN", "HR", "IT_SUPPORT"] },
   { href: "/audit-logs", label: "Audit log", roles: ["ADMIN"] },
+  { href: "/admin/org-units", label: "Organization Units", roles: ["ADMIN"] },
   { href: "/settings", label: "Settings", roles: ["ADMIN", "HR", "IT_SUPPORT", "EMPLOYEE"] },
 ];
 

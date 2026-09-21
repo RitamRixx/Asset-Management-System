@@ -10,7 +10,11 @@ session, so running the suite resets local dev data — expected for a
 local run; a CI pipeline would point this at a disposable database via
 DATABASE_URL instead.
 """
+import os
+os.environ["HCAPTCHA_ENABLED"] = "false"
+
 import pytest
+import sqlalchemy as sa
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session as SQLASession
 
@@ -26,7 +30,8 @@ from app import models  # noqa: F401  -- registers every mapped class
 
 @pytest.fixture(scope="session", autouse=True)
 def _fresh_schema():
-    Base.metadata.drop_all(bind=engine)
+    with engine.begin() as conn:
+        conn.execute(sa.text("DROP SCHEMA public CASCADE; CREATE SCHEMA public;"))
     Base.metadata.create_all(bind=engine)
     yield
 
